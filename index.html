@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+
+    <link rel="stylesheet" href="css/reset.css">
+    <link rel="stylesheet" href="css/reveal.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <style>
+        .resize-drag {
+            width: 25%;
+            min-height: 50px;
+            color: #000;
+            border-radius: 0.75em;
+            touch-action: none;
+            user-select: none;
+            -webkit-transform: translate(0px, 0px);
+            transform: translate(0px, 0px);
+            position: absolute;
+        }
+
+        #reveal {
+            width: 100%;
+            height: 700px;
+            padding: 10px;
+            margin: 10px 0;
+            background: #f1f1f1;
+        }
+
+        #controls {
+            margin: 10px 0;
+        }
+
+        #list-slides {
+            padding: 10px 20px;
+            margin: 10px;
+            border: 1px solid #f1f1f1;
+        }
+
+        #list-slides .thumb-slide {
+            width: 100%;
+            height: 70px;
+            border-radius: 10px;
+            border: 1px dotted #000;
+        }
+
+        .anchor-link {
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        section {
+            top: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .editor {
+            height: 100%;
+        }
+
+        .editor.ck-focuses {
+            position: relative;
+        }
+
+    </style>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="https://cdn.ckeditor.com/ckeditor5/12.1.0/inline/ckeditor.js"></script>
+</head>
+<body>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-sm-2" id="controls">
+            <div>
+                <div id="list-slides">
+                    <div class="lists-item">
+                        <a class="anchor-link" href="#slide-1">
+                            <div class="thumb-slide pointer">Slide 1</div>
+                        </a>
+                        <a class="anchor-link" href="#slide-2">
+                            <div class="thumb-slide pointer">Slide 2</div>
+                        </a>
+                        <a class="anchor-link add-new-slide">
+                            <div class="thumb-slide pointer">Add new slide</div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <button class="btn btn-success create-text-element">Add new text</button>
+            </div>
+        </div>
+        <div class="col-sm-10">
+            <div class="reveal" id="reveal">
+                <div class="slides">
+                    <section id="slide-1">Slide 1</section>
+                    <section id="slide-2">Slide 2</section>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="box">
+
+</div>
+<!--<div id="drag-1" class="resize-drag"></div>-->
+<!--<div id="drag-2" class="resize-drag"></div>-->
+<script src="js/reveal.js"></script>
+
+<script>
+    // More info about config & dependencies:
+    // - https://github.com/hakimel/reveal.js#configuration
+    // - https://github.com/hakimel/reveal.js#dependencies
+    Reveal.initialize({
+        dependencies: [
+            { src: 'plugin/markdown/marked.js' },
+            { src: 'plugin/markdown/markdown.js' },
+            { src: 'plugin/notes/notes.js', async: true },
+            { src: 'plugin/highlight/highlight.js', async: true }
+        ]
+    });
+</script>
+<script src="https://unpkg.com/interactjs/dist/interact.min.js"></script>
+<script>
+    interact('.resize-drag')
+        .draggable({
+            onmove: window.dragMoveListener,
+            modifiers: [
+                interact.modifiers.restrict({
+                    restriction: 'parent',
+                    elementRect: { top: 0, left: 0, bottom: 1, right: 1 }
+                }),
+                interact.modifiers.snap({
+                    targets: [
+                        interact.createSnapGrid({ x: 30, y: 30 })
+                    ],
+                    range: Infinity,
+                    relativePoints: [ { x: 0, y: 0 } ]
+                }),
+            ]
+        })
+        .resizable({
+            // resize from all edges and corners
+            edges: { left: true, right: true, bottom: true, top: true },
+
+            modifiers: [
+                // keep the edges inside the parent
+                interact.modifiers.restrictEdges({
+                    outer: 'parent',
+                    endOnly: true,
+                }),
+
+                // minimum size
+                interact.modifiers.restrictSize({
+                    min: { width: 100, height: 50 },
+                }),
+            ],
+
+            inertia: true
+        })
+        .on('resizemove', function (event) {
+            var target = event.target,
+                x = (parseFloat(target.getAttribute('data-x')) || 0),
+                y = (parseFloat(target.getAttribute('data-y')) || 0);
+
+            // update the element's style
+            target.style.width  = event.rect.width + 'px';
+            target.style.height = event.rect.height + 'px';
+
+            // translate when resizing from top or left edges
+            x += event.deltaRect.left;
+            y += event.deltaRect.top;
+
+            target.style.webkitTransform = target.style.transform =
+                'translate(' + x + 'px,' + y + 'px)';
+
+            target.setAttribute('data-x', x);
+            target.setAttribute('data-y', y);
+        });
+
+    function dragMoveListener (event) {
+        var target = event.target,
+            // keep the dragged position in the data-x/data-y attributes
+            x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx,
+            y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
+
+        // translate the element
+        target.style.webkitTransform =
+            target.style.transform =
+                'translate(' + x + 'px, ' + y + 'px)';
+
+        // update the posiion attributes
+        target.setAttribute('data-x', x);
+        target.setAttribute('data-y', y);
+    }
+
+    // this is used later in the resizing and gesture demos
+    window.dragMoveListener = dragMoveListener;
+</script>
+<script>
+    $(function() {
+        var slideIndex = 2;
+
+        $(".add-new-slide").click(function() {
+            slideIndex++;
+
+            $(`<a class="anchor-link" href="#slide-${slideIndex}"><div class="thumb-slide pointer">Slide ${slideIndex}</div></a>`).insertBefore($(this));
+            $(".slides").append(`<section id="slide-${slideIndex}">Slide ${slideIndex}</section>`);
+
+            Reveal.slide(slideIndex);
+        });
+
+        $(".create-text-element").click(() => {
+            $("section.present").append(`
+                <div class="resize-drag"><div class="editor">Text here</div></div>
+            `);
+
+            InlineEditor.create(document.querySelector('.editor')).then(editor => {
+                editor.ui.focusTracker.on( 'change:isFocused', ( evt, name, value ) => {
+                    console.log( 'isFocused = ', value );
+                } );
+            });
+        });
+    });
+</script>
+</body>
+</html>

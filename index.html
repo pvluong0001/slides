@@ -206,6 +206,7 @@
 <script>
     $(function() {
         var slideIndex = 2;
+        var indexEditor = 1;
 
         $(".add-new-slide").click(function() {
             slideIndex++;
@@ -218,14 +219,16 @@
 
         $(".create-text-element").click(() => {
             $("section.present").append(`
-                <div class="resize-drag"><div class="editor">Text here</div></div>
+                <div class="resize-drag"><div class="editor editor-${indexEditor}">Text here</div></div>
             `);
 
-            InlineEditor.create(document.querySelector('.editor')).then(editor => {
+            InlineEditor.create(document.querySelector(`.editor-${indexEditor}`)).then(editor => {
                 editor.ui.focusTracker.on( 'change:isFocused', ( evt, name, value ) => {
                     console.log( 'isFocused = ', value );
                 } );
             });
+
+            indexEditor++;
         });
     });
 </script>
